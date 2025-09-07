@@ -1,7 +1,9 @@
+-- CREAR BASE DE DATOS
 CREATE DATABASE IF NOT EXISTS aeroteck;
 USE aeroteck;
 
 -- TABLA PASAJEROS
+
 CREATE TABLE IF NOT EXISTS pasajeros (
     id_pasajero INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     nombre VARCHAR(50) NOT NULL,
@@ -12,25 +14,51 @@ CREATE TABLE IF NOT EXISTS pasajeros (
 );
 
 -- TABLA AVIONES
+
 CREATE TABLE IF NOT EXISTS aviones (
     id_avion INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     modelo VARCHAR(30) NOT NULL,
     capacidad INT NOT NULL,
-    ano_fabricacion YEAR NOT NULL
+    matricula VARCHAR(20) UNIQUE NOT NULL
 );
+-- TABLA ROLES TRIPULACIÓN
 
+CREATE TABLE IF NOT EXISTS roles_tripulacion (
+    id_rol INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombre_rol VARCHAR(30) UNIQUE NOT NULL
+);
+-- Insertamos roles básicos
+
+INSERT INTO roles_tripulacion (nombre_rol)
+VALUES ('PILOTO'), ('COPILOTO'), ('AZAFATA');
+
+-- TABLA TRIPULANTES
+
+CREATE TABLE IF NOT EXISTS tripulantes (
+    id_tripulante INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    nombre VARCHAR(50) NOT NULL,
+    apellido VARCHAR(50) NOT NULL,
+    dni INT UNIQUE NOT NULL,
+    id_rol INT NOT NULL,
+    FOREIGN KEY (id_rol) REFERENCES roles_tripulacion(id_rol)
+);
 -- TABLA VUELOS
+
 CREATE TABLE IF NOT EXISTS vuelos (
     id_vuelo INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    origen VARCHAR(30) NOT NULL,
-    destino VARCHAR(30) NOT NULL,
+    id_avion INT NOT NULL,
+    origen VARCHAR(50) NOT NULL,
+    destino VARCHAR(50) NOT NULL,
     fecha_salida DATE NOT NULL,
     hora_salida TIME NOT NULL,
-    id_avion INT NOT NULL,
+    fecha_llegada DATE,
+    hora_llegada TIME,
+    estado ENUM('PROGRAMADO', 'EN VUELO', 'CANCELADO', 'COMPLETADO') DEFAULT 'PROGRAMADO',
     FOREIGN KEY (id_avion) REFERENCES aviones(id_avion)
 );
 
 -- TABLA RESERVAS
+
 CREATE TABLE IF NOT EXISTS reservas (
     id_reserva INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     id_pasajero INT NOT NULL,
@@ -42,26 +70,17 @@ CREATE TABLE IF NOT EXISTS reservas (
     FOREIGN KEY (id_vuelo) REFERENCES vuelos(id_vuelo),
     UNIQUE (id_vuelo, asiento) -- No se repiten asientos en mismo vuelo
 );
+-- TABLA ASIGNACIÓN TRIPULACIÓN A VUELOS
 
--- TABLA TRIPULANTES
-CREATE TABLE IF NOT EXISTS tripulantes (
-    id_tripulante INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    nombre VARCHAR(30) NOT NULL,
-    apellido VARCHAR(30) NOT NULL,
-    dni INT NOT NULL UNIQUE,
-    rol ENUM('PILOTO', 'AZAFATA', 'COPILOTO') NOT NULL
-);
-
--- TABLA TRIPULACION_POR_VUELO
-CREATE TABLE IF NOT EXISTS tripulacion_por_vuelo (
+CREATE TABLE IF NOT EXISTS vuelo_tripulacion (
+    id_asignacion INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
     id_vuelo INT NOT NULL,
     id_tripulante INT NOT NULL,
     FOREIGN KEY (id_vuelo) REFERENCES vuelos(id_vuelo),
-    FOREIGN KEY (id_tripulante) REFERENCES tripulantes(id_tripulante),
-    PRIMARY KEY (id_vuelo, id_tripulante)
+    FOREIGN KEY (id_tripulante) REFERENCES tripulantes(id_tripulante)
 );
 
--- INSERT PASAJEROS
+-- INSERTAMOS PASAJEROS
 INSERT INTO pasajeros (nombre, apellido, dni, email) 
 	VALUES
 	('Juan', 'Pérez', 30123456, 'juan.perez@mail.com'),
@@ -75,25 +94,27 @@ INSERT INTO pasajeros (nombre, apellido, dni, email)
 	('Adrián', 'Alarcón', 33502652, 'adrialr@gmail.com'),
 	('Santiago', 'Barboza', 36526478, 'barbosanti@hotmail.com');
 
--- INSERT AVIONES
-INSERT INTO aviones (modelo, capacidad, ano_fabricacion) 
-		VALUES
-		('Boeing 737 800', 150, 2023),
-		('Boeing 737 800', 150, 2022),
-		('Airbus A320neo', 189, 2025),
-		('Embraer E190', 140, 2022);
 
--- INSERT VUELOS
-INSERT INTO vuelos (origen, destino, fecha_salida, hora_salida, id_avion)
+-- INSERTAMOS AVIONES
+INSERT INTO aviones (modelo, capacidad, matricula) 
 	VALUES
-	('Buenos Aires', 'Madrid', '2025-08-15', '22:30:00', 1),
-	('Madrid', 'Buenos Aires', '2025-08-20', '10:15:00', 1),
-	('Buenos Aires', 'Santiago', '2025-08-18', '08:45:00', 2),
-	('Santiago', 'Buenos Aires', '2025-08-18', '14:00:00', 2),
-	('Buenos Aires', 'Miami', '2025-09-01', '23:50:00', 3),
-	('Miami', 'Buenos Aires', '2025-09-10', '07:20:00', 3),
-	('Buenos Aires', 'Roma', '2025-09-05', '21:10:00', 4),
-	('Roma', 'Buenos Aires', '2025-09-12', '12:00:00', 4);
+	('Boeing 737 800', 150, 'LV-BAA'),
+	('Boeing 737 800', 150, 'LV-BBB'),
+	('Airbus A320neo', 189, 'LV-CCC'),
+	('Embraer E190', 140, 'LV-DDD');
+
+-- INSERTAMOS LOS VUELOS
+
+INSERT INTO vuelos (origen, destino, fecha_salida, hora_salida, fecha_llegada, hora_llegada, estado, id_avion)
+VALUES
+('Buenos Aires', 'Madrid', '2025-08-15', '22:30:00', '2025-08-16', '13:45:00', 'COMPLETADO', 1),
+('Madrid', 'Buenos Aires', '2025-08-20', '10:15:00', '2025-08-20', '18:30:00', 'PROGRAMADO', 1),
+('Buenos Aires', 'Santiago', '2025-08-18', '08:45:00', '2025-08-18', '10:30:00', 'COMPLETADO', 2),
+('Santiago', 'Buenos Aires', '2025-08-18', '14:00:00', '2025-08-18', '16:15:00', 'COMPLETADO', 2),
+('Buenos Aires', 'Miami', '2025-09-01', '23:50:00', '2025-09-02', '07:45:00', 'PROGRAMADO', 3),
+('Miami', 'Buenos Aires', '2025-09-10', '07:20:00', '2025-09-10', '16:20:00', 'PROGRAMADO', 3),
+('Buenos Aires', 'Roma', '2025-09-05', '21:10:00', '2025-09-06', '14:10:00', 'PROGRAMADO', 4),
+('Roma', 'Buenos Aires', '2025-09-12', '12:00:00', '2025-09-12', '20:30:00', 'PROGRAMADO', 4);
 
 -- INSERT RESERVAS
 INSERT INTO reservas (id_pasajero, id_vuelo, fecha_reserva, asiento, estado) 	
@@ -108,22 +129,22 @@ INSERT INTO reservas (id_pasajero, id_vuelo, fecha_reserva, asiento, estado)
 	(7, 4, '2025-08-08', '22A', 'CANCELADA'),
 	(8, 4, '2025-08-09', '22B', 'CONFIRMADA'),
 	(9, 5, '2025-08-10', '10A', 'CONFIRMADA');
-
-	-- INSERT TRIPULANTES
-	INSERT INTO tripulantes (nombre, apellido, dni, rol) 
-		VALUES
-		('Carlos', 'Fernández', 30215478, 'PILOTO'),
-		('María', 'Gómez', 33456789, 'AZAFATA'),
-		('Javier', 'Martínez', 29874512, 'COPILOTO'),
-		('Lucía', 'Pérez', 31547896, 'AZAFATA'),
-		('Sofía', 'López', 32654789, 'AZAFATA'),
-		('Miguel', 'Torres', 30124587, 'COPILOTO'),
-		('Paula', 'Díaz', 33987456, 'AZAFATA'),
-		('Hernán', 'Suárez', 29347851, 'PILOTO'),
-		('Florencia', 'Méndez', 31254879, 'AZAFATA');
-
--- INSERT TRIPULACION_POR_VUELO
-INSERT INTO tripulacion_por_vuelo (id_vuelo, id_tripulante) 
+    
+    -- INSERT TRIPULANTES
+	INSERT INTO tripulantes (nombre, apellido, dni, id_rol) 
+VALUES
+('Carlos', 'Fernández', 30215478, 1), 
+('María', 'Gómez', 33456789, 3),      
+('Javier', 'Martínez', 29874512, 2),  
+('Lucía', 'Pérez', 31547896, 3),      
+('Sofía', 'López', 32654789, 3),      
+('Miguel', 'Torres', 30124587, 2),    
+('Paula', 'Díaz', 33987456, 3),       
+('Hernán', 'Suárez', 29347851, 1),    
+('Florencia', 'Méndez', 31254879, 3); 
+        
+        -- INSERT TRIPULACION_POR_VUELO
+INSERT INTO vuelo_tripulacion (id_vuelo, id_tripulante) 
 		VALUES
 		(1, 1),
 		(1, 3),
