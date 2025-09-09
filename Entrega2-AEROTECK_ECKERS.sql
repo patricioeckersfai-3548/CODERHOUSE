@@ -9,7 +9,7 @@
 
 -- Selección de la base de datos
 
-use aeroteck;
+USE aeroteck;
 
 -- 1) insercion de datos
 -- ======================================================
