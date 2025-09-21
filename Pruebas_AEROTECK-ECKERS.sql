@@ -1,5 +1,5 @@
 -- ===============================================
--- Archivo: Entregafinal_AEROTECK-ECKERS.sql
+-- Archivo: Pruebas_AEROTECK-ECKERS.sql
 -- Pruebas de funciones, SP, triggers y vistas
 -- Proyecto Final: AEROTECK - Patricio Eckers
 -- ===============================================
